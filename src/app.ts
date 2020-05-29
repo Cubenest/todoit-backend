@@ -11,11 +11,15 @@ import { MONGODB_URI } from "./util/secrets";
 
 // Controllers (route handlers)
 import * as userController from "./controllers/user";
+import * as groupController from "./controllers/group";
+import * as todoController from "./controllers/todo";
 
 
 // API keys and Passport configuration
 import * as passportConfig from "./config/passport";
 import { UserDocument } from "./models/User";
+import { GroupDocument } from "./models/Group";
+import { TodoDocument } from "./models/Todo";
 
 // Create Express server
 const app = express();
@@ -35,7 +39,7 @@ mongoose.connect(mongoUrl, { useNewUrlParser: true, useCreateIndex: true, useUni
 app.set("port", process.env.PORT || 3001);
 app.use(compression());
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: false }));
 app.use(passport.initialize());
 app.use(lusca.xframe("SAMEORIGIN"));
 app.use(lusca.xssProtection(true));
@@ -63,9 +67,24 @@ app.get("/account/unlink/:provider", passportConfig.isAuthenticated, userControl
 app.get("/test",passportConfig.isAuthenticated,userController.testRoute);
 
 /**
- * API examples routes.
+ * API Group routes.
  */
+app.post("/api/group", passportConfig.isAuthenticated, groupController.postGroup);
+app.get("/api/group", passportConfig.isAuthenticated, groupController.getAllGroups);
+app.get("/api/group/:groupId", passportConfig.isAuthenticated, groupController.getGroup);
+app.post("/api/group/:groupId", passportConfig.isAuthenticated, groupController.updateGroupName);
+app.post("/api/group/users/:groupId", passportConfig.isAuthenticated, groupController.updateGroupUsers);
+app.delete("/api/group/delete/:groupId", passportConfig.isAuthenticated, groupController.deleteGroup);
 
+/**
+ * API Todo routes.
+ */
+app.post("/api/group/:groupId/todo/", passportConfig.isAuthenticated, todoController.createTodo);
+app.get("/api/group/:groupId/todo/", passportConfig.isAuthenticated, todoController.getAllTodos);
+app.get("/api/group/:groupId/todo/:status", passportConfig.isAuthenticated, todoController.getRequiredTodos);
+app.get("/api/group/:groupId/todo/:todoId", passportConfig.isAuthenticated, todoController.getTodo);
+app.post("/api/todo/:todoId", passportConfig.isAuthenticated, todoController.updateTodo);
+app.delete("/api/todo/delete/:todoId", passportConfig.isAuthenticated, todoController.deleteTodo);
 /**
  * OAuth authentication routes. (Sign in)
  */
