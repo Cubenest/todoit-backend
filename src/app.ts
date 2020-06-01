@@ -13,6 +13,7 @@ import { MONGODB_URI } from "./util/secrets";
 import * as userController from "./controllers/user";
 import * as groupController from "./controllers/group";
 import * as todoController from "./controllers/todo";
+import * as searchController from "./controllers/search";
 
 
 // API keys and Passport configuration
@@ -74,17 +75,24 @@ app.get("/api/group", passportConfig.isAuthenticated, groupController.getAllGrou
 app.get("/api/group/:groupId", passportConfig.isAuthenticated, groupController.getGroup);
 app.post("/api/group/:groupId", passportConfig.isAuthenticated, groupController.updateGroupName);
 app.post("/api/group/users/:groupId", passportConfig.isAuthenticated, groupController.updateGroupUsers);
-app.delete("/api/group/delete/:groupId", passportConfig.isAuthenticated, groupController.deleteGroup);
+app.delete("/api/group/:groupId", passportConfig.isAuthenticated, groupController.deleteGroup);
 
 /**
  * API Todo routes.
  */
 app.post("/api/group/:groupId/todo/", passportConfig.isAuthenticated, todoController.createTodo);
-app.get("/api/group/:groupId/todo/", passportConfig.isAuthenticated, todoController.getAllTodos);
-app.get("/api/group/:groupId/todo/:status", passportConfig.isAuthenticated, todoController.getRequiredTodos);
+app.get("/api/group/:groupId/todos/", passportConfig.isAuthenticated, todoController.getAllTodos);
+app.get("/api/group/:groupId/todos/:status", passportConfig.isAuthenticated, todoController.getRequiredTodos);
 app.get("/api/group/:groupId/todo/:todoId", passportConfig.isAuthenticated, todoController.getTodo);
-app.post("/api/todo/:todoId", passportConfig.isAuthenticated, todoController.updateTodo);
-app.delete("/api/todo/delete/:todoId", passportConfig.isAuthenticated, todoController.deleteTodo);
+app.post("/api/group/:groupId/todo/:todoId", passportConfig.isAuthenticated, todoController.updateTodo);
+app.delete("/api/group/:groupId/todo/:todoId", passportConfig.isAuthenticated, todoController.deleteTodo);
+
+/**
+ * API Search routes.
+ */
+app.get("/api/search", passportConfig.isAuthenticated, searchController.searchAllTodos);
+
+
 /**
  * OAuth authentication routes. (Sign in)
  */

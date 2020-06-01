@@ -9,6 +9,7 @@ export type TodoDocument = mongoose.Document & {
     status: number;
     priority?: number;
     groupId: string;
+    userId: string;
 
 
 };
@@ -21,6 +22,7 @@ const todoSchema = new mongoose.Schema({
     status: { type: Number, default: 0 },
     priority:{ type: Number, default: 1 },
     groupId: String,
+    userId: String
     }, { timestamps: true });
 
 export const Todo = mongoose.model<TodoDocument>("Todo", todoSchema);

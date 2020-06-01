@@ -10,6 +10,8 @@ import { check, sanitize, validationResult } from "express-validator";
 import "../config/passport";
 import {Group} from "../models/Group";
 import mongoose from "mongoose";
+import { Status } from "../config/globals";
+
 
  /* POST /api/group
  * Create Groups Page.
@@ -24,10 +26,12 @@ export const postGroup = async (req: Request, res: Response, next: NextFunction)
     }
 
     const user = req.user as UserDocument;
+    
     const group = new Group(
         {
             name: req.body.name,
-            users: [user.email]
+            users: [user.email],
+            userId :user._id
         }
     );
 
@@ -44,7 +48,9 @@ export const postGroup = async (req: Request, res: Response, next: NextFunction)
  */
 
 export const getAllGroups = (req: Request, res: Response) =>{
-    Group.find({}, (err, group) => {
+
+    const user = req.user as UserDocument;
+    Group.find({userId: user._id}, (err, group) => {
         if(err){
             return res.send(err);
         }
@@ -56,8 +62,8 @@ export const getAllGroups = (req: Request, res: Response) =>{
  * Get Single Group Page.
  */
 export const getGroup = (req: Request, res: Response) => {
-    
-    Group.findById(req.params.groupId, (err, group) => {
+    const user = req.user as UserDocument;
+    Group.find({_id: req.params.groupId, userId: user._id}, (err, group) => {
         if(err){
            return res.status(404).send({
                 msg: "Group not Found"
@@ -79,8 +85,8 @@ export const updateGroupName = async (req: Request, res: Response, next: NextFun
         // req.flash("errors", errors.array());
         return next(errors);
     }
-
-    Group.findOneAndUpdate({ _id: req.params.groupId }, req.body, { new: true }, (err, group) => {
+    const user = req.user as UserDocument;
+    Group.findOneAndUpdate({ _id: req.params.groupId, userId: user._id }, req.body, { new: true }, (err, group) => {
         if(err){
             return res.status(404).send({
                 msg: "Group not Found"
@@ -101,13 +107,13 @@ export const updateGroupUsers = async (req: Request, res: Response, next: NextFu
     await sanitize("email").normalizeEmail({ gmail_remove_dots: false }).run(req);
 
     const errors = validationResult(req);
-
+    
     if (!errors.isEmpty()) {
         
         return next(errors);
     }
-    
-    Group.findOne({ _id: req.params.groupId }, (err, group) => {
+    const user = req.user as UserDocument;
+    Group.findOne({ _id: req.params.groupId,userId: user._id }, (err, group) => {
         if(err){
            return res.status(404).send({
                 msg: "Group not Found"
@@ -130,8 +136,8 @@ export const updateGroupUsers = async (req: Request, res: Response, next: NextFu
  */
 export const deleteGroup = (req: Request, res: Response) => 
 {
-    
-    Group.findById({ _id: req.params.groupId }, (err, group) => 
+    const user = req.user as UserDocument;
+    Group.findById({ _id: req.params.groupId, userId: user._id }, (err, group) => 
     {
         if(err){
            return res.status(404).send({
@@ -140,11 +146,11 @@ export const deleteGroup = (req: Request, res: Response) =>
         }
         if(group)
         {
-        group.status = 4;
+        group.status = Status.Archived;
         group.save();
         return res.status(200).send({
             msg: "Group Deleted"
         });
         }
     }
-    )};
+    );};

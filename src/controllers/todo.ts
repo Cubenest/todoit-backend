@@ -7,6 +7,7 @@ import { Request, Response, NextFunction } from "express";
 import { IVerifyOptions } from "passport-local";
 import { WriteError } from "mongodb";
 import { check, sanitize, validationResult } from "express-validator";
+import { Status } from "../config/globals";
 import "../config/passport";/**
 
 
@@ -33,13 +34,14 @@ export const createTodo = async (req: Request, res: Response, next: NextFunction
             });
         }
         
-    });
-    var dueDatecheck = new Date(req.body.dueDate)
-    if(dueDatecheck.toString() == 'Invalid Date'){
+
+    var dueDatecheck = new Date(req.body.dueDate);
+    if(dueDatecheck.toString() == "Invalid Date"){
         return res.status(500).send({
             msg: "Invalid Date"
         });
     }
+    const user = req.user as UserDocument;
     const todo = new Todo(
         {
             title: req.body.title,
@@ -48,7 +50,9 @@ export const createTodo = async (req: Request, res: Response, next: NextFunction
             dueDate: new Date(req.body.dueDate),
             status: req.body.status,
             priority: req.body.priority,
-            desc: req.body.desc
+            desc: req.body.desc,
+            userId :user._id
+
 
         });
 
@@ -58,13 +62,15 @@ export const createTodo = async (req: Request, res: Response, next: NextFunction
         }
         res.send("Todo created");
     });
+});
 };
 /* GET /api/group/:groupId/todo
  * Get Todo Page.
  */
 
 export const getAllTodos = (req: Request, res: Response) =>{
-    Todo.find({groupId : req.params.groupId}, (err, todo) => {
+    const user = req.user as UserDocument;
+    Todo.find({groupId : req.params.groupId,userId: user._id}, (err, todo) => {
         if(err){
             return res.send(err);
         }
@@ -77,7 +83,8 @@ export const getAllTodos = (req: Request, res: Response) =>{
  */
 
 export const getRequiredTodos = (req: Request, res: Response) =>{
-    Todo.find({groupId : req.params.groupId, status:req.params.status}, (err, todo) => {
+    const user = req.user as UserDocument;
+    Todo.find({groupId : req.params.groupId, status:req.params.status,userId: user._id}, (err, todo) => {
         if(err){
             return res.send(err);
         }
@@ -85,12 +92,12 @@ export const getRequiredTodos = (req: Request, res: Response) =>{
     });
 };
 
-/* GET /api/group/:groupId/:todoId
+/* GET /api/group/:groupId/todo/:todoId
  * Get Single Todo Page.
  */
 export const getTodo = (req: Request, res: Response) => {
-    
-    Todo.find({groupId : req.params.groupId, _id:req.params.todoId}, (err, group) => {
+    const user = req.user as UserDocument;
+    Todo.find({groupId : req.params.groupId, _id:req.params.todoId,userId: user._id}, (err, group) => {
         if(err){
            return res.status(404).send({
                 msg: "Todo not Found"
@@ -100,7 +107,7 @@ export const getTodo = (req: Request, res: Response) => {
     });
 };
 
-/* POST /api/todo/:todoId
+/* POST /api/group/:groupId/todo/:todoId
  * Update todo
  */
 
@@ -114,15 +121,15 @@ export const updateTodo = async (req: Request, res: Response, next: NextFunction
     }
     if(req.body.dueDate){
 
-    var dueDatecheck = new Date(req.body.dueDate)
-    if(dueDatecheck.toString() == 'Invalid Date'){
+    var dueDatecheck = new Date(req.body.dueDate);
+    if(dueDatecheck.toString() == "Invalid Date"){
         return res.status(500).send({
             msg: "Invalid Date"
         });
     }
 }
-
-    Todo.findOneAndUpdate({ _id: req.params.todoId }, req.body, { new: true }, (err, todo) => {
+    const user = req.user as UserDocument;
+    Todo.findOneAndUpdate({groupId : req.params.groupId, _id:req.params.todoId,userId: user._id}, req.body, { new: true }, (err, todo) => {
         if(err){
             return res.status(404).send({
                 msg: "Todo not Found"
@@ -133,13 +140,14 @@ export const updateTodo = async (req: Request, res: Response, next: NextFunction
    
 };
 
-/* DELETE /api/todo/delete/:todoId
+/* DELETE /api/group/:groupId/todo/:todoId
  * Delete Groups Name.
  */
+
 export const deleteTodo = (req: Request, res: Response) => 
 {
-    
-    Todo.findById(req.params.todoId , (err, todo) => 
+    const user = req.user as UserDocument;
+    Todo.findOne({ _id : req.params.todoId, groupId: req.params.groupId,userId: user._id }, (err, todo) => 
     {
         if(err){
            return res.status(404).send({
@@ -148,11 +156,11 @@ export const deleteTodo = (req: Request, res: Response) =>
         }
         if(todo)
         {
-        todo.status = 4;
+        todo.status = Status.Archived;
         todo.save();
         return res.status(200).send({
             msg: "Todo Deleted"
         });
         }
-    }
-)};
+    });
+};
