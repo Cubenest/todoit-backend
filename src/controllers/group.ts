@@ -50,7 +50,7 @@ export const postGroup = async (req: Request, res: Response, next: NextFunction)
 export const getAllGroups = (req: Request, res: Response) =>{
 
     const user = req.user as UserDocument;
-    Group.find({userId: user._id}, (err, group) => {
+    Group.find({users: {$elemMatch:{$eq:user.email}}, status:{$ne: Status.Trashed}}, (err, group) => {
         if(err){
             return res.send(err);
         }
@@ -63,7 +63,7 @@ export const getAllGroups = (req: Request, res: Response) =>{
  */
 export const getGroup = (req: Request, res: Response) => {
     const user = req.user as UserDocument;
-    Group.find({_id: req.params.groupId, userId: user._id}, (err, group) => {
+    Group.find({_id: req.params.groupId, users: {$elemMatch:{$eq:user.email}}}, (err, group) => {
         if(err){
            return res.status(404).send({
                 msg: "Group not Found"
@@ -86,7 +86,7 @@ export const updateGroupName = async (req: Request, res: Response, next: NextFun
         return next(errors);
     }
     const user = req.user as UserDocument;
-    Group.findOneAndUpdate({ _id: req.params.groupId, userId: user._id }, req.body, { new: true }, (err, group) => {
+    Group.findOneAndUpdate({ _id: req.params.groupId, users: {$elemMatch:{$eq:user.email}} }, req.body, { new: true }, (err, group) => {
         if(err){
             return res.status(404).send({
                 msg: "Group not Found"
@@ -113,7 +113,7 @@ export const updateGroupUsers = async (req: Request, res: Response, next: NextFu
         return next(errors);
     }
     const user = req.user as UserDocument;
-    Group.findOne({ _id: req.params.groupId,userId: user._id }, (err, group) => {
+    Group.findOne({ _id: req.params.groupId,users: {$elemMatch:{$eq:user.email}} }, (err, group) => {
         if(err){
            return res.status(404).send({
                 msg: "Group not Found"
@@ -131,26 +131,42 @@ export const updateGroupUsers = async (req: Request, res: Response, next: NextFu
    
 };
 
-/* DELETE /api/group/delete/:groupId
+/* DELETE /api/group/:groupId
  * Delete Groups Name.
  */
 export const deleteGroup = (req: Request, res: Response) => 
 {
     const user = req.user as UserDocument;
-    Group.findById({ _id: req.params.groupId, userId: user._id }, (err, group) => 
+    Group.findOne({ _id: req.params.groupId, users: {$elemMatch:{$eq:user.email}},status:{$ne :Status.Trashed} }, (err, group) => 
     {
         if(err){
            return res.status(404).send({
                 msg: "Group not Found"
             });
         }
-        if(group)
+        if(group){
+        if(group.users[0] == user.email )
         {
-        group.status = Status.Archived;
-        group.save();
-        return res.status(200).send({
+            group.status = Status.Archived;
+            group.save();
+            return res.status(200).send({
             msg: "Group Deleted"
         });
+        }
+        else {
+            
+            const email = user.email;
+            group.users=group.users.filter(item => item !== email);
+            group.save();
+            return res.status(200).send({
+                msg: "You have exited from the group"
+            });
+        } 
+        }
+        else{
+            return res.status(404).send({
+                msg: "Group not Found"
+            });
         }
     }
     );};

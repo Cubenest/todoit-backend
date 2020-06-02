@@ -14,6 +14,7 @@ import * as userController from "./controllers/user";
 import * as groupController from "./controllers/group";
 import * as todoController from "./controllers/todo";
 import * as searchController from "./controllers/search";
+import * as inviteController from "./controllers/invite";
 
 
 // API keys and Passport configuration
@@ -92,6 +93,12 @@ app.delete("/api/group/:groupId/todo/:todoId", passportConfig.isAuthenticated, t
  */
 app.get("/api/search", passportConfig.isAuthenticated, searchController.searchAllTodos);
 
+/**
+ * Group Invite routes.
+ */
+app.post("/api/group/:groupId/invite", passportConfig.isAuthenticated, inviteController.inviteUser);
+app.get("/api/user/invite/accept/:groupId", passportConfig.isAuthenticated, inviteController.acceptInvite);
+app.get("/api/user/invite/reject/:groupId", passportConfig.isAuthenticated, inviteController.rejectInvite);
 
 /**
  * OAuth authentication routes. (Sign in)

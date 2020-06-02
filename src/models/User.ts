@@ -21,6 +21,7 @@ export type UserDocument = mongoose.Document & {
         website: string;
         picture: string;
     };
+    invite: string[];
 
     comparePassword: comparePasswordFunction;
     gravatar: (size: number) => string;
@@ -54,7 +55,9 @@ const userSchema = new mongoose.Schema({
         location: String,
         website: String,
         picture: String
-    }
+    },
+    invite: Array
+
 }, { timestamps: true });
 
 /**

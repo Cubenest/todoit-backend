@@ -19,51 +19,55 @@ mongoose.Promise = global.Promise;
 
  export const searchAllTodos = (req: Request, res: Response) =>{
     const user = req.user as UserDocument;  
-    var q = req.query.q;
+    const q = req.query.q;
 
-    var search =<any>{userId: user._id};
-
+    const search: any ={userId: user._id,status:{$ne:Status.Trashed}};
     if(req.query.q){
-        search.title = new RegExp(q ,'i')
+        search.title = new RegExp(q ,"i");
     }
-    if(req.query.status == 0 || req.query.status == 1 || req.query.status == 2 || req.query.status == 3){
-        search.status = req.query.status
-    }
-    if (req.query.status =="0,1")
+   
+    if (req.query.status)
     {
-        search.status=  { $in: [0, 1] }
+        search.status=  { $in: req.query.status.split(",") };
+    }
+    if (req.query.priority)
+    {
+        search.priority=  { $in: req.query.priority.split(",") };
     }
     if(req.query.dueDate){
-        search.dueDate = req.query.dueDate
+        search.dueDate = req.query.dueDate;
     }
     if(req.query.groupId){
-        search.groupId = req.query.groupId
+        search.groupId = req.query.groupId;
+    }
+    if(req.query.labels){
+        search.labels = {$elemMatch:{$eq:req.query.labels}};
     }
     
 
-    var findGroups = new Promise((resolve, reject) => {
+    const findGroups = new Promise((resolve, reject) => {
         
-        Group.find({name: new RegExp(q ,'i'),userId: user._id}, function(err, group) {
+        Group.find({name: new RegExp(q ,"i"),users: {$elemMatch:{$eq:user.email}}, status:{$ne:Status.Trashed}}, function(err, group) {
             if (err) reject(err);
-            resolve(group)                   
+            resolve(group);                   
          });
-      })  
+      });  
     
-      var findTodos = new Promise((resolve, reject) => {
+      const findTodos = new Promise((resolve, reject) => {
         Todo.find(search, function(err, todo) {
             if (err) reject(err);
-            resolve(todo)                   
+            resolve(todo);                   
          });
-      }) 
+      }); 
       
       return Promise.all([findGroups, findTodos])
                     .then(array => {
                         
-                       res.json(array)
+                       res.json(array);
                   })
                   .catch(function(err) {
                     res.status(404).send({
                         msg: "No results"
                     });
                   });
-                }
+                };
