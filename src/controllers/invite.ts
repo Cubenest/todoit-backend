@@ -21,7 +21,9 @@ export const inviteUser = async (req: Request, res: Response, done: Function) =>
     if (!errors.isEmpty()) {
         return res.json(errors.array());
     }
-    const inviteurl = req.protocol + "://" + req.get("host") +"/invitation?groupId="+ req.params.groupId+"&email="+ req.body.email;
+    const url =req.protocol + "://" + req.get("host");
+    const accepturl =  url+"/api/user/invite/accept/"+ req.params.groupId+"&email="+ req.body.email;
+    const rejectturl =  url+"/api/user/invite/reject/"+ req.params.groupId+"&email="+ req.body.email;
     const loggeduser = req.user as UserDocument;
     User.findOne({email: req.body.email}, (err,user) =>{
         if(err){
@@ -36,18 +38,35 @@ export const inviteUser = async (req: Request, res: Response, done: Function) =>
                 host: "smtp.sendgrid.net",
                 port: 587,
                 auth: {
-                    user: "apikey",
-                    pass: "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"
+                    user: process.env.SENDGRID_USER,
+                    pass: process.env.SENDGRID_PASSWORD
                 }
             });
             const mailOptions = {
                 to: req.body.email,
-                from: "mohammedshoaib@cigma.in",
+                from: "TodoIt <mytodoitapp@gmail.com>",
                 subject: "Todoit group invitation",
                 text: `Hey there,\n\n ${loggeduser.email} has invited you to join a Group on Todoit.\n
-                Click on the link to join the group ${inviteurl}`,
-                html:`<p>Hey there,<br><br> <b>${loggeduser.email}</b> has invited you to join a Group on Todoit.\n
-                Click on the button to join the group <br><br><a href="${inviteurl}" target="_blank"><button>Accept</button></a>`
+                Click on the link to join the group ${accepturl}`,
+                html:`<table border="1" cellpadding="0" cellspacing="0" style="text-align:center;">
+                <tbody>
+                  <tr>
+                    <td style="line-height:22px; text-align:left;padding:6px 6px 6px 6px;" height="100%" valign="top" bgcolor="" role="module-content" colspan="2"><div><div style="font-family: inherit">Hey there,<br>
+                      <br>
+                      <strong>${loggeduser.email}</strong> has invited you to join a Group on Todoit.<br>
+                    Click on the button to join the group.</div>
+                    <div style="font-family: inherit"><br></div><div></div></div></td>
+                  </tr>
+                  <tr>
+                    <td align="center" bgcolor="#0f1f87" style="border-radius:6px; font-size:16px; text-align:center; background-color:inherit;">
+                      <a href="${accepturl}" style="background-color:#0f1f87; border:1px solid #333333; border-color:#333333; border-radius:6px; border-width:1px; color:#ffffff; display:inline-block; font-size:14px; font-weight:normal; letter-spacing:0px; line-height:normal; padding:12px 18px 12px 18px; text-align:center; text-decoration:none; border-style:solid;" target="_blank">Accept</a>
+                    </td>
+                    <td align="center" bgcolor="#d80f0f" style="border-radius:6px; font-size:16px; text-align:center; background-color:inherit;">
+                      <a href="${rejectturl}" style="background-color:#d80f0f; border:1px solid #333333; border-color:#333333; border-radius:6px; border-width:1px; color:#ffffff; display:inline-block; font-size:14px; font-weight:normal; letter-spacing:0px; line-height:normal; padding:12px 18px 12px 18px; text-align:center; text-decoration:none; border-style:solid;" target="_blank">Reject</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>`
             };
             transporter.sendMail(mailOptions, (err) => {
                 res.json({ msg: "Success! Your invitation has been sent." });
@@ -56,7 +75,7 @@ export const inviteUser = async (req: Request, res: Response, done: Function) =>
         }
     });
 
-}
+};
 
 /* Invite Accept
 * api/user/invite/accept/:groupId
@@ -83,7 +102,7 @@ export const acceptInvite= (req: Request, res: Response) =>
     }
     });
 
-}
+};
 
 /* Reject Accept
 * api/user/invite/reject/:groupId
@@ -111,4 +130,4 @@ export const rejectInvite= (req: Request, res: Response) =>
     }
     });
 
-}
+};

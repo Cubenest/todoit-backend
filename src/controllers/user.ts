@@ -279,7 +279,8 @@ export const postReset = async (req: Request, res: Response, next: NextFunction)
         },
         function sendResetPasswordEmail(user: UserDocument, done: Function) {
             const transporter = nodemailer.createTransport({
-                service: "SendGrid",
+                host: "smtp.sendgrid.net",
+                port: 587,
                 auth: {
                     user: process.env.SENDGRID_USER,
                     pass: process.env.SENDGRID_PASSWORD
@@ -287,7 +288,7 @@ export const postReset = async (req: Request, res: Response, next: NextFunction)
             });
             const mailOptions = {
                 to: user.email,
-                from: "support@todoit.com",
+                from: "TodoIt <mytodoitapp@gmail.com>",
                 subject: "Your password has been changed",
                 text: `Hello,\n\nThis is a confirmation that the password for your account ${user.email} has just been changed.\n`
             };
@@ -352,7 +353,8 @@ export const postForgot = async (req: Request, res: Response, next: NextFunction
         },
         function sendForgotPasswordEmail(token: AuthToken, user: UserDocument, done: Function) {
             const transporter = nodemailer.createTransport({
-                service: "SendGrid",
+                host: "smtp.sendgrid.net",
+                port: 587,
                 auth: {
                     user: process.env.SENDGRID_USER,
                     pass: process.env.SENDGRID_PASSWORD
@@ -360,7 +362,7 @@ export const postForgot = async (req: Request, res: Response, next: NextFunction
             });
             const mailOptions = {
                 to: user.email,
-                from: "support@todoit.com",
+                from: "TodoIt <mytodoitapp@gmail.com>",
                 subject: "Reset your password on TodoIt",
                 text: `You are receiving this email because you (or someone else) have requested the reset of the password for your account.\n\n
           Please click on the following link, or paste this into your browser to complete the process:\n\n

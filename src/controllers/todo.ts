@@ -70,26 +70,54 @@ export const createTodo = async (req: Request, res: Response, next: NextFunction
 
 export const getAllTodos = (req: Request, res: Response) =>{
     const user = req.user as UserDocument;
-    Todo.find({groupId : req.params.groupId,userId: user._id}, (err, todo) => {
+    var page = parseInt(req.query.page)
+    var size = parseInt(req.query.size)
+    var query:any = {};
+    if(page < 0 || page === 0) {
+        page = 1;
+  }
+    query.skip = size * (page - 1)
+    query.limit = size
+  Todo.countDocuments({groupId : req.params.groupId},(err,totalCount) => {
+             if(err) {
+                return res.send(err);
+             }
+    Todo.find({groupId : req.params.groupId},{},query, (err, todo) => {
         if(err){
             return res.send(err);
         }
-        res.json(todo);
+        const result = {"todos": todo, "count": totalCount}
+        res.json(result);
     });
-};
-
+});
+}
 /* GET /api/group/:groupId/todo/:status
  * Get Required Todo Page.
  */
 
 export const getRequiredTodos = (req: Request, res: Response) =>{
     const user = req.user as UserDocument;
-    Todo.find({groupId : req.params.groupId, status:{ $in: req.params.status.split(",") }}, (err, todo) => {
-        if(err){
-            return res.send(err);
+    var page = parseInt(req.query.page)
+    var size = parseInt(req.query.size)
+    var query:any = {};
+    if(page < 0 || page === 0) {
+        page = 1;
+  }
+    query.skip = size * (page - 1)
+    query.limit = size;
+    Todo.countDocuments({groupId : req.params.groupId,status:{ $in: req.params.status.split(",") }},(err,totalCount) => {
+        if(err) {
+           return res.send(err);
         }
-        res.json(todo);
+    Todo.find({groupId : req.params.groupId, status:{ $in: req.params.status.split(",") }},{},query, (err, todo) => {
+    if(err){
+        return res.send(err);
+    }
+    const result = {"todos": todo, "count": totalCount}
+    res.json(result);
     });
+});
+    
 };
 
 /* GET /api/group/:groupId/todo/:todoId

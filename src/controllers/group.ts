@@ -50,12 +50,32 @@ export const postGroup = async (req: Request, res: Response, next: NextFunction)
 export const getAllGroups = (req: Request, res: Response) =>{
 
     const user = req.user as UserDocument;
-    Group.find({users: {$elemMatch:{$eq:user.email}}, status:{$ne: Status.Trashed}}, (err, group) => {
-        if(err){
-            return res.send(err);
+    var page = parseInt(req.query.page)
+    var size = parseInt(req.query.size)
+    var query:any = {};
+    if(page < 0 || page === 0) {
+        page = 1;
+    }
+    
+    Group.countDocuments({users: {$elemMatch:{$eq:user.email}}, status:{$ne: Status.Trashed}},(err,totalCount) => {
+        if(err) {
+           return res.send(err);
         }
-        res.json(group);
+    query.skip = size * (page - 1);
+    query.limit = size;
+    if (totalCount<=query.skip){
+        query.skip = 0;
+    }
+    
+    Group.find({users: {$elemMatch:{$eq:user.email}}, status:{$ne: Status.Trashed}},{},query, (err, group) => {
+    if(err){
+        return res.send(err);
+    }
+    const result = {"groups": group, "count": totalCount}
+    res.json(result);
     });
+});
+    
 };
 
 /* GET /api/group
