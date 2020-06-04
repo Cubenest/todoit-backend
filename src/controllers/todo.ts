@@ -70,14 +70,32 @@ export const createTodo = async (req: Request, res: Response, next: NextFunction
 
 export const getAllTodos = (req: Request, res: Response) =>{
     const user = req.user as UserDocument;
-    var page = parseInt(req.query.page)
-    var size = parseInt(req.query.size)
-    var query:any = {};
+    let page = parseInt(req.query.page);
+    const size = parseInt(req.query.size);
+    const query: any = {};
+
     if(page < 0 || page === 0) {
         page = 1;
   }
-    query.skip = size * (page - 1)
-    query.limit = size
+    query.skip = size * (page - 1);
+    query.limit = size;
+
+    const sort: any={};
+    if(req.query.status){
+        sort.status = req.query.status;
+    }
+    if(req.query.priority){
+        sort.priority = req.query.priority;
+    }
+    if( req.query.dueDate){
+        sort.dueDate = req.query.dueDate;
+    } 
+    if(req.query.createdAt){
+        sort.createdAt = req.query.createdAt;
+    }
+    if(req.query.title){
+        sort.createdAt = req.query.title;
+    } 
   Todo.countDocuments({groupId : req.params.groupId},(err,totalCount) => {
              if(err) {
                 return res.send(err);
@@ -86,25 +104,41 @@ export const getAllTodos = (req: Request, res: Response) =>{
         if(err){
             return res.send(err);
         }
-        const result = {"todos": todo, "count": totalCount}
+        const result = {"todos": todo, "count": totalCount};
         res.json(result);
-    });
+    }).sort(sort);
 });
-}
+};
 /* GET /api/group/:groupId/todo/:status
  * Get Required Todo Page.
  */
 
 export const getRequiredTodos = (req: Request, res: Response) =>{
     const user = req.user as UserDocument;
-    var page = parseInt(req.query.page)
-    var size = parseInt(req.query.size)
-    var query:any = {};
+    let page = parseInt(req.query.page);
+    const size = parseInt(req.query.size);
+    const query: any = {};
     if(page < 0 || page === 0) {
         page = 1;
   }
-    query.skip = size * (page - 1)
+    query.skip = size * (page - 1);
     query.limit = size;
+    const sort: any={};
+    if(req.query.status){
+        sort.status = req.query.status;
+    }
+    if(req.query.priority){
+        sort.priority = req.query.priority;
+    }
+    if( req.query.dueDate){
+        sort.dueDate = req.query.dueDate;
+    } 
+    if(req.query.createdAt){
+        sort.createdAt = req.query.createdAt;
+    }
+    if(req.query.title){
+        sort.createdAt = req.query.title;
+    } 
     Todo.countDocuments({groupId : req.params.groupId,status:{ $in: req.params.status.split(",") }},(err,totalCount) => {
         if(err) {
            return res.send(err);
@@ -113,9 +147,9 @@ export const getRequiredTodos = (req: Request, res: Response) =>{
     if(err){
         return res.send(err);
     }
-    const result = {"todos": todo, "count": totalCount}
+    const result = {"todos": todo, "count": totalCount};
     res.json(result);
-    });
+    }).sort(sort);
 });
     
 };

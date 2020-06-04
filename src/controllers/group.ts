@@ -50,9 +50,9 @@ export const postGroup = async (req: Request, res: Response, next: NextFunction)
 export const getAllGroups = (req: Request, res: Response) =>{
 
     const user = req.user as UserDocument;
-    var page = parseInt(req.query.page)
-    var size = parseInt(req.query.size)
-    var query:any = {};
+    let page = parseInt(req.query.page);
+    const size = parseInt(req.query.size);
+    const query: any = {};
     if(page < 0 || page === 0) {
         page = 1;
     }
@@ -71,7 +71,7 @@ export const getAllGroups = (req: Request, res: Response) =>{
     if(err){
         return res.send(err);
     }
-    const result = {"groups": group, "count": totalCount}
+    const result = {"groups": group, "count": totalCount};
     res.json(result);
     });
 });
