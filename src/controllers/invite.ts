@@ -2,36 +2,44 @@ import { User, UserDocument, AuthToken } from "../models/User";
 import { Request, Response, NextFunction } from "express";
 import nodemailer from "nodemailer";
 import { check, sanitize, validationResult } from "express-validator";
-import {Group} from "../models/Group";
+import { Group } from "../models/Group";
 import { Status } from "../config/globals";
 
 /* invite /api/group/:groupId/invite
  * Invite user to group
  */
 
-export const inviteUser = async (req: Request, res: Response, done: Function) => 
-{
- 
-    await check("email", "Please enter a valid email address.").isEmail().run(req);
+export const inviteUser = async (
+    req: Request,
+    res: Response,
+    done: Function
+) => {
+    await check("email", "Please enter a valid email address.")
+        .isEmail()
+        .run(req);
     // eslint-disable-next-line @typescript-eslint/camelcase
-    await sanitize("email").normalizeEmail({ gmail_remove_dots: false }).run(req);
+    await sanitize("email")
+        .normalizeEmail({ gmail_remove_dots: false })
+        .run(req);
 
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
         return res.json(errors.array());
     }
-    const url =req.protocol + "://" + req.get("host");
-    const accepturl =  url+"/api/user/invite/accept/"+ req.params.groupId+"&email="+ req.body.email;
-    const rejectturl =  url+"/api/user/invite/reject/"+ req.params.groupId+"&email="+ req.body.email;
+    const url = req.protocol + "://" + req.get("host");
+    const accepturl =
+        url + "/accept/" + req.params.groupId + "&email=" + req.body.email;
+    const rejectturl =
+        url + "/reject/" + req.params.groupId + "&email=" + req.body.email;
     const loggeduser = req.user as UserDocument;
-    User.findOne({email: req.body.email}, (err,user) =>{
-        if(err){
+    User.findOne({ email: req.body.email }, (err, user) => {
+        if (err) {
             return res.status(500).send({
-                msg: "Unable to invite"
+                msg: "Unable to invite",
             });
         }
-        if(user){
+        if (user) {
             user.invite.push(req.params.groupId);
             user.save();
             const transporter = nodemailer.createTransport({
@@ -39,8 +47,8 @@ export const inviteUser = async (req: Request, res: Response, done: Function) =>
                 port: 587,
                 auth: {
                     user: process.env.SENDGRID_USER,
-                    pass: process.env.SENDGRID_PASSWORD
-                }
+                    pass: process.env.SENDGRID_PASSWORD,
+                },
             });
             const mailOptions = {
                 to: req.body.email,
@@ -48,7 +56,7 @@ export const inviteUser = async (req: Request, res: Response, done: Function) =>
                 subject: "Todoit group invitation",
                 text: `Hey there,\n\n ${loggeduser.email} has invited you to join a Group on Todoit.\n
                 Click on the link to join the group ${accepturl}`,
-                html:`<table border="1" cellpadding="0" cellspacing="0" style="text-align:center;">
+                html: `<table border="1" cellpadding="0" cellspacing="0" style="text-align:center;">
                 <tbody>
                   <tr>
                     <td style="line-height:22px; text-align:left;padding:6px 6px 6px 6px;" height="100%" valign="top" bgcolor="" role="module-content" colspan="2"><div><div style="font-family: inherit">Hey there,<br>
@@ -66,7 +74,7 @@ export const inviteUser = async (req: Request, res: Response, done: Function) =>
                     </td>
                   </tr>
                 </tbody>
-              </table>`
+              </table>`,
             };
             transporter.sendMail(mailOptions, (err) => {
                 res.json({ msg: "Success! Your invitation has been sent." });
@@ -74,60 +82,54 @@ export const inviteUser = async (req: Request, res: Response, done: Function) =>
             });
         }
     });
-
 };
 
 /* Invite Accept
-* api/user/invite/accept/:groupId
-*/
+ * api/user/invite/accept/:groupId
+ */
 
-export const acceptInvite= (req: Request, res: Response) =>
-{
+export const acceptInvite = (req: Request, res: Response) => {
     const user = req.user as UserDocument;
-    user.invite=user.invite.filter(item => item !== req.params.groupId);
+    user.invite = user.invite.filter((item) => item !== req.params.groupId);
     user.save();
     Group.findOne({ _id: req.params.groupId }, (err, group) => {
-        if(err){
-           return res.status(404).send({
-                msg: "Group not Found"
+        if (err) {
+            return res.status(404).send({
+                msg: "Group not Found",
             });
         }
-        if(group){
-        if(group.users.includes(req.body.email)){
-           return res.status(200).json(group);
+        if (group) {
+            if (group.users.includes(req.body.email)) {
+                return res.status(200).json(group);
+            }
+            group.users.push(req.body.email);
+            group.save();
+            res.json(group);
         }
-        group.users.push(req.body.email);
-        group.save();
-        res.json(group);
-    }
     });
-
 };
 
 /* Reject Accept
-* api/user/invite/reject/:groupId
-*/
+ * api/user/invite/reject/:groupId
+ */
 
-export const rejectInvite= (req: Request, res: Response) =>
-{
+export const rejectInvite = (req: Request, res: Response) => {
     const user = req.user as UserDocument;
-    user.invite=user.invite.filter(item => item !== req.params.groupId);
+    user.invite = user.invite.filter((item) => item !== req.params.groupId);
     user.save();
     Group.findOne({ _id: req.params.groupId }, (err, group) => {
-        if(err){
-           return res.status(404).send({
-                msg: "Group not Found"
+        if (err) {
+            return res.status(404).send({
+                msg: "Group not Found",
             });
         }
-        if(group){
-        
+        if (group) {
             const email = user.email;
-            group.users=group.users.filter(item => item !== email);
+            group.users = group.users.filter((item) => item !== email);
             group.save();
             return res.status(200).send({
-                msg: "You have rejected the invite"
+                msg: "You have rejected the invite",
             });
-    }
+        }
     });
-
 };

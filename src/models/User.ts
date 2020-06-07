@@ -28,65 +28,86 @@ export type UserDocument = mongoose.Document & {
     generateJWT: generateJWTFunction;
 };
 
-type comparePasswordFunction = (candidatePassword: string, cb: (err: any, isMatch: any) => {}) => void;
+type comparePasswordFunction = (
+    candidatePassword: string,
+    cb: (err: any, isMatch: any) => {}
+) => void;
 
-type generateJWTFunction = () => string
+type generateJWTFunction = () => string;
 
 export interface AuthToken {
     accessToken: string;
     kind: string;
 }
 
-const userSchema = new mongoose.Schema({
-    email: { type: String, unique: true },
-    password: String,
-    passwordResetToken: String,
-    passwordResetExpires: Date,
+const userSchema = new mongoose.Schema(
+    {
+        email: { type: String, unique: true },
+        password: String,
+        passwordResetToken: String,
+        passwordResetExpires: Date,
 
-    facebook: String,
-    twitter: String,
-    google: String,
-    tokens: Array,
-    jwtToken: String,
+        facebook: String,
+        twitter: String,
+        google: String,
+        tokens: Array,
 
-    profile: {
-        name: String,
-        gender: String,
-        location: String,
-        website: String,
-        picture: String
+        profile: {
+            name: String,
+            gender: String,
+            location: String,
+            website: String,
+            picture: String,
+        },
     },
-    invite: Array
-
-}, { timestamps: true });
+    { timestamps: true }
+);
 
 /**
  * Password hash middleware.
  */
 userSchema.pre("save", function save(next) {
     const user = this as UserDocument;
-    if (!user.isModified("password")) { return next(); }
+    if (!user.isModified("password")) {
+        return next();
+    }
     bcrypt.genSalt(10, (err, salt) => {
-        if (err) { return next(err); }
-        bcrypt.hash(user.password, salt, undefined, (err: mongoose.Error, hash) => {
-            if (err) { return next(err); }
-            user.password = hash;
-            next();
-        });
+        if (err) {
+            return next(err);
+        }
+        bcrypt.hash(
+            user.password,
+            salt,
+            undefined,
+            (err: mongoose.Error, hash) => {
+                if (err) {
+                    return next(err);
+                }
+                user.password = hash;
+                next();
+            }
+        );
     });
 });
 
-const comparePassword: comparePasswordFunction = function (candidatePassword, cb) {
-    bcrypt.compare(candidatePassword, this.password, (err: mongoose.Error, isMatch: boolean) => {
-        cb(err, isMatch);
-    });
+const comparePassword: comparePasswordFunction = function (
+    candidatePassword,
+    cb
+) {
+    bcrypt.compare(
+        candidatePassword,
+        this.password,
+        (err: mongoose.Error, isMatch: boolean) => {
+            cb(err, isMatch);
+        }
+    );
 };
 
 userSchema.methods.comparePassword = comparePassword;
 
 const generateJWT: generateJWTFunction = function () {
-    const body = { _id : this._id, email : this.email };
-    const token = sign({ user : body },process.env.JWT_SECRET);
+    const body = { _id: this._id, email: this.email };
+    const token = sign({ user: body }, process.env.JWT_SECRET);
     return token;
 };
 
