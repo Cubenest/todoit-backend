@@ -64,7 +64,7 @@ export const postLogin = async (
                 //user password in the token so we pick only the email and id
                 //Sign the JWT token and populate the payload with the user email and id
                 const token = user.generateJWT();
-                res.json({ token });
+                res.json({ token, id: user._id, email: user.email });
             });
         }
     )(req, res, next);

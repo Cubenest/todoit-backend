@@ -105,7 +105,7 @@ The full folder structure of this app is explained below:
 | **src/models**       | Models define Mongoose schemas that will be used in storing and retrieving data from MongoDB               |
 | **src/public**       | Static assets that will be used client side                                                                |
 | **src/types**        | Holds .d.ts files not found on DefinitelyTyped. Covered more in this [section](#type-definition-dts-files) |
-| **src**/server.ts    | Entry point to your express app                                                                            |
+| **src**/index.ts     | Entry point to your express app                                                                            |
 | **test**             | Contains your tests. Separate from source because there is a different build process.                      |
 | .env.example         | API keys, tokens, passwords, database URI. Clone this, but don't check it in to public repos.              |
 | .travis.yml          | Used to configure Travis CI build                                                                          |
@@ -188,7 +188,7 @@ Below is a list of all the scripts this template has available:
 | -------------------- | --------------------------------------------------------------------------------------------- |
 | `start`              | Does the same as 'npm run serve'. Can be invoked with `npm start`                             |
 | `build`              | Full build. Runs ALL build tasks (`build-sass`, `build-ts`, `lint`, `copy-static-assets`)     |
-| `serve`              | Runs node on `dist/server.js` which is the apps entry point                                   |
+| `serve`              | Runs node on `dist/index.js` which is the apps entry point                                    |
 | `watch-node`         | Runs node with nodemon so the process restarts if it crashes. Used in the main watch task     |
 | `watch`              | Runs all watch tasks (TypeScript, Sass, Node). Use this if you're not touching static assets. |
 | `test`               | Runs tests using Jest test runner                                                             |
@@ -354,7 +354,7 @@ This is mostly identical to the "Node.js: Attach by Process ID" template with on
 We added `"protocol": "inspector"` which tells VS Code that we're using the latest version of Node which uses a new debug protocol.
 
 With this file in place, you can hit `F5` to attach a debugger.
-You will probably have multiple node processes running, so you need to find the one that shows `node dist/server.js`.
+You will probably have multiple node processes running, so you need to find the one that shows `node dist/index.js`.
 Now just set your breakpoints and go!
 
 ## Testing

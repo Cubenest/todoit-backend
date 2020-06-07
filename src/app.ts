@@ -19,8 +19,6 @@ import * as inviteController from "./controllers/invite";
 // API keys and Passport configuration
 import * as passportConfig from "./config/passport";
 import { UserDocument } from "./models/User";
-import { GroupDocument } from "./models/Group";
-import { TodoDocument } from "./models/Todo";
 
 // Create Express server
 const app = express();
@@ -67,24 +65,29 @@ app.use(
 /**
  * Primary app routes.
  */
-// app.get("/",);
-app.post("/login", userController.postLogin);
-app.post("/forgot", userController.postForgot);
-app.get("/reset/:token", userController.getReset);
-app.post("/reset/:token", userController.postReset);
-app.post("/signup", userController.postSignup);
-app.get("/account", passportConfig.isAuthenticated, userController.getAccount);
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+app.post("/api/login", userController.postLogin);
+app.post("/api/forgot", userController.postForgot);
+app.get("/api/reset/:token", userController.getReset);
+app.post("/api/reset/:token", userController.postReset);
+app.post("/api/signup", userController.postSignup);
+app.get(
+    "/api/account",
+    passportConfig.isAuthenticated,
+    userController.getAccount
+);
 app.post(
-    "/account/password",
+    "/api/account/password",
     passportConfig.isAuthenticated,
     userController.postUpdatePassword
 );
 app.get(
-    "/account/unlink/:provider",
+    "/api/account/unlink/:provider",
     passportConfig.isAuthenticated,
     userController.getOauthUnlink
 );
-app.get("/test", passportConfig.isAuthenticated, userController.testRoute);
 
 /**
  * API Group routes.
