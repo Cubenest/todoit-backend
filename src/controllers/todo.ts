@@ -8,7 +8,7 @@ import { IVerifyOptions } from "passport-local";
 import { WriteError } from "mongodb";
 import { check, sanitize, validationResult } from "express-validator";
 import { Status } from "../config/globals";
-import "../config/passport";/**
+import "../config/passport"; /**
 
 
  * POST group/:groupId/todo
@@ -18,8 +18,14 @@ import { isDate } from "util";
 import { Group } from "../models/Group";
 import { Todo } from "../models/Todo";
 
-export const createTodo = async (req: Request, res: Response, next: NextFunction) => {
-    await check("title", "Title should be between 3-100 Characters").isLength({ min:3,max: 100 }).run(req);
+export const createTodo = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    await check("title", "Title should be between 3-100 Characters")
+        .isLength({ min: 3, max: 100 })
+        .run(req);
 
     const errors = validationResult(req);
 
@@ -28,22 +34,20 @@ export const createTodo = async (req: Request, res: Response, next: NextFunction
     }
 
     Group.findById(req.params.groupId, (err, group) => {
-        if(err){
-           return res.status(404).send({
-                msg: "Group not Found"
+        if (err) {
+            return res.status(404).send({
+                msg: "Group not Found",
             });
         }
-        
 
-    const dueDatecheck = new Date(req.body.dueDate);
-    if(dueDatecheck.toString() == "Invalid Date"){
-        return res.status(500).send({
-            msg: "Invalid Date"
-        });
-    }
-    const user = req.user as UserDocument;
-    const todo = new Todo(
-        {
+        const dueDatecheck = new Date(req.body.dueDate);
+        if (dueDatecheck.toString() == "Invalid Date") {
+            return res.status(500).send({
+                msg: "Invalid Date",
+            });
+        }
+        const user = req.user as UserDocument;
+        const todo = new Todo({
             title: req.body.title,
             groupId: req.params.groupId,
             labels: req.body.labels,
@@ -51,107 +55,118 @@ export const createTodo = async (req: Request, res: Response, next: NextFunction
             status: req.body.status,
             priority: req.body.priority,
             desc: req.body.desc,
-            userId :user._id
-
-
+            userId: user._id,
         });
 
-    todo.save(function (err) {
-        if (err) {
-            return next(err);
-        }
-        res.send("Todo created");
+        todo.save(function (err) {
+            if (err) {
+                return next(err);
+            }
+            res.send("Todo created");
+        });
     });
-});
 };
 /* GET /api/group/:groupId/todo
  * Get Todo Page.
  */
 
-export const getAllTodos = (req: Request, res: Response) =>{
+export const getAllTodos = (req: Request, res: Response) => {
     const user = req.user as UserDocument;
     let page = parseInt(req.query.page);
     const size = parseInt(req.query.size);
     const query: any = {};
 
-    if(page < 0 || page === 0) {
+    if (page < 0 || page === 0) {
         page = 1;
-  }
+    }
     query.skip = size * (page - 1);
     query.limit = size;
 
-    const sort: any={};
-    if(req.query.status){
+    const sort: any = {};
+    if (req.query.status) {
         sort.status = req.query.status;
     }
-    if(req.query.priority){
+    if (req.query.priority) {
         sort.priority = req.query.priority;
     }
-    if( req.query.dueDate){
+    if (req.query.dueDate) {
         sort.dueDate = req.query.dueDate;
-    } 
-    if(req.query.createdAt){
+    }
+    if (req.query.createdAt) {
         sort.createdAt = req.query.createdAt;
     }
-    if(req.query.title){
+    if (req.query.title) {
         sort.createdAt = req.query.title;
-    } 
-  Todo.countDocuments({groupId : req.params.groupId},(err,totalCount) => {
-             if(err) {
-                return res.send(err);
-             }
-    Todo.find({groupId : req.params.groupId},{},query, (err, todo) => {
-        if(err){
+    }
+    Todo.countDocuments({ groupId: req.params.groupId }, (err, totalCount) => {
+        if (err) {
             return res.send(err);
         }
-        const result = {"todos": todo, "count": totalCount};
-        res.json(result);
-    }).sort(sort);
-});
+        Todo.find({ groupId: req.params.groupId }, {}, query, (err, todo) => {
+            if (err) {
+                return res.send(err);
+            }
+            const result = { todos: todo, count: totalCount };
+            res.json(result);
+        }).sort(sort);
+    });
 };
 /* GET /api/group/:groupId/todo/:status
  * Get Required Todo Page.
  */
 
-export const getRequiredTodos = (req: Request, res: Response) =>{
+export const getRequiredTodos = (req: Request, res: Response) => {
     const user = req.user as UserDocument;
     let page = parseInt(req.query.page);
     const size = parseInt(req.query.size);
     const query: any = {};
-    if(page < 0 || page === 0) {
+    if (page < 0 || page === 0) {
         page = 1;
-  }
+    }
     query.skip = size * (page - 1);
     query.limit = size;
-    const sort: any={};
-    if(req.query.status){
+    const sort: any = {};
+    if (req.query.status) {
         sort.status = req.query.status;
     }
-    if(req.query.priority){
+    if (req.query.priority) {
         sort.priority = req.query.priority;
     }
-    if( req.query.dueDate){
+    if (req.query.dueDate) {
         sort.dueDate = req.query.dueDate;
-    } 
-    if(req.query.createdAt){
+    }
+    if (req.query.createdAt) {
         sort.createdAt = req.query.createdAt;
     }
-    if(req.query.title){
+    if (req.query.title) {
         sort.createdAt = req.query.title;
-    } 
-    Todo.countDocuments({groupId : req.params.groupId,status:{ $in: req.params.status.split(",") }},(err,totalCount) => {
-        if(err) {
-           return res.send(err);
-        }
-    Todo.find({groupId : req.params.groupId, status:{ $in: req.params.status.split(",") }},{},query, (err, todo) => {
-    if(err){
-        return res.send(err);
     }
-    const result = {"todos": todo, "count": totalCount};
-    res.json(result);
-    }).sort(sort);
-});
-    
+    Todo.countDocuments(
+        {
+            groupId: req.params.groupId,
+            status: { $in: req.params.status.split(",") },
+        },
+        (err, totalCount) => {
+            if (err) {
+                return res.send(err);
+            }
+            Todo.find(
+                {
+                    groupId: req.params.groupId,
+                    status: { $in: req.params.status.split(",") },
+                },
+                {},
+                query,
+                (err, todo) => {
+                    if (err) {
+                        return res.send(err);
+                    }
+                    const result = { todos: todo, count: totalCount };
+                    res.json(result);
+                }
+            ).sort(sort);
+        }
+    );
 };
 
 /* GET /api/group/:groupId/todo/:todoId
@@ -159,70 +174,82 @@ export const getRequiredTodos = (req: Request, res: Response) =>{
  */
 export const getTodo = (req: Request, res: Response) => {
     const user = req.user as UserDocument;
-    Todo.find({groupId : req.params.groupId, _id:req.params.todoId}, (err, group) => {
-        if(err){
-           return res.status(404).send({
-                msg: "Todo not Found"
-            });
+    Todo.find(
+        { groupId: req.params.groupId, _id: req.params.todoId },
+        (err, group) => {
+            if (err) {
+                return res.status(404).send({
+                    msg: "Todo not Found",
+                });
+            }
+            res.json(group);
         }
-        res.json(group);
-    });
+    );
 };
 
 /* POST /api/group/:groupId/todo/:todoId
  * Update todo
  */
 
-export const updateTodo = async (req: Request, res: Response, next: NextFunction) => {
-    await check("title", "title should be between 3-100 Characters").isLength({ min:3,max:100 }).run(req);
+export const updateTodo = async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+) => {
+    await check("title", "title should be between 3-100 Characters")
+        .isLength({ min: 3, max: 100 })
+        .run(req);
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
         // req.flash("errors", errors.array());
         return next(errors);
     }
-    if(req.body.dueDate){
-
-    const dueDatecheck = new Date(req.body.dueDate);
-    if(dueDatecheck.toString() == "Invalid Date"){
-        return res.status(500).send({
-            msg: "Invalid Date"
-        });
-    }
-}
-    const user = req.user as UserDocument;
-    Todo.findOneAndUpdate({groupId : req.params.groupId, _id:req.params.todoId}, req.body, { new: true }, (err, todo) => {
-        if(err){
-            return res.status(404).send({
-                msg: "Todo not Found"
+    if (req.body.dueDate) {
+        const dueDatecheck = new Date(req.body.dueDate);
+        if (dueDatecheck.toString() == "Invalid Date") {
+            return res.status(500).send({
+                msg: "Invalid Date",
             });
         }
-        res.json(todo);
-    });
-   
+    }
+    const user = req.user as UserDocument;
+    Todo.findOneAndUpdate(
+        { groupId: req.params.groupId, _id: req.params.todoId },
+        req.body,
+        { new: true },
+        (err, todo) => {
+            if (err) {
+                return res.status(404).send({
+                    msg: "Todo not Found",
+                });
+            }
+            res.json(todo);
+        }
+    );
 };
 
 /* DELETE /api/group/:groupId/todo/:todoId
  * Delete Groups Name.
  */
 
-export const deleteTodo = (req: Request, res: Response) => 
-{
+export const deleteTodo = (req: Request, res: Response) => {
     const user = req.user as UserDocument;
-    Todo.findOne({ _id : req.params.todoId, groupId: req.params.groupId}, (err, todo) => 
-    {
-        if(err){
-           return res.status(404).send({
-                msg: "Todo not Found"
-            });
+    Todo.findOne(
+        { _id: req.params.todoId, groupId: req.params.groupId },
+        (err, todo) => {
+            if (err) {
+                return res.status(404).send({
+                    msg: "Todo not Found",
+                });
+            }
+            if (todo) {
+                todo.status = Status.Trashed;
+                todo.save();
+                return res.status(200).send({
+                    msg: "Todo Deleted",
+                });
+            }
         }
-        if(todo)
-        {
-        todo.status = Status.Trashed;
-        todo.save();
-        return res.status(200).send({
-            msg: "Todo Deleted"
-        });
-        }
-    });
+    );
 };
