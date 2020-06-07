@@ -43,7 +43,7 @@ export const postLogin = async (
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
-        return res.json(errors.array());
+        return res.status(400).json(errors.array());
     }
 
     passport.authenticate(
@@ -54,7 +54,7 @@ export const postLogin = async (
             }
             if (!user) {
                 // req.flash("errors", {msg: info.message});
-                return res.json({ msg: info.message });
+                return res.status(400).json({ msg: info.message });
             }
             req.logIn(user, { session: false }, (err) => {
                 if (err) {
