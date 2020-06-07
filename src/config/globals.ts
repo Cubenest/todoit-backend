@@ -3,10 +3,10 @@ export enum Status {
     inProgress = 1,
     completed = 2,
     Archived = 3,
-    Trashed = 3
+    Trashed = 3,
 }
 export enum Priority {
     Low = 0,
     Medium = 1,
-    High = 2
+    High = 2,
 }
